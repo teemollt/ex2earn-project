@@ -3,8 +3,8 @@ import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
 import { CoreModule } from './core/core.module';
 import { UserModule } from './user/user.module';
-import { PrismaService } from './common/prisma/prisma.service';
-import { SolanaService } from './common/solana/solana.service';
+import { PrismaService } from './common/prisma.service';
+import { SolanaService } from './common/solana.service';
 
 
 @Module({
