@@ -1,58 +1,44 @@
-import axios from 'axios';
+// src/services/api.ts
 
-// 기본 API URL 설정 (실제 백엔드 URL로 변경 필요)
-const API_BASE_URL = 'https://api.example.com';
+import { Connection, PublicKey, Transaction, sendAndConfirmTransaction } from '@solana/web3.js';
+import { CONFIG } from '../config';
 
-// axios 인스턴스 생성
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
+// Solana 연결 객체 생성
+const connection = new Connection(CONFIG.SOLANA_NETWORK_URL, 'confirmed');
+
+export const solanaApi = {
+  // 계정 잔액 조회
+  getBalance: async (publicKey: string): Promise<number> => {
+    const account = new PublicKey(publicKey);
+    const balance = await connection.getBalance(account);
+    return balance / 10 ** 9; // lamports를 SOL로 변환
   },
-});
 
-// 인증 토큰 설정 함수
-export const setAuthToken = (token: string) => {
-  api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+  // 트랜잭션 전송
+  sendTransaction: async (transaction: Transaction, signers: any[]): Promise<string> => {
+    const signature = await sendAndConfirmTransaction(
+      connection,
+      transaction,
+      signers
+    );
+    return signature;
+  },
+
+  // 스쿼트 기록 저장 (온체인 트랜잭션으로 구현 필요)
+  saveSquatRecord: async (publicKey: string, count: number): Promise<string> => {
+    // 여기에 스쿼트 기록을 온체인에 저장하는 로직 구현
+    // 예: 스마트 컨트랙트 호출 등
+    console.log(`Saving squat record for ${publicKey}: ${count} squats`);
+    return 'transaction_signature_placeholder';
+  },
+
+  // 리워드 청구 (온체인 트랜잭션으로 구현 필요)
+  claimReward: async (publicKey: string, amount: number): Promise<string> => {
+    // 여기에 리워드를 청구하는 로직 구현
+    // 예: 토큰 전송 트랜잭션 등
+    console.log(`Claiming reward for ${publicKey}: ${amount} tokens`);
+    return 'transaction_signature_placeholder';
+  }
 };
 
-// API 요청 함수들
-export const apiService = {
-  // 로그인
-  login: async (email: string, password: string) => {
-    const response = await api.post('/auth/login', { email, password });
-    return response.data;
-  },
-
-  // 회원가입
-  register: async (email: string, password: string, username: string) => {
-    const response = await api.post('/auth/register', { email, password, username });
-    return response.data;
-  },
-
-  // 사용자 프로필 조회
-  getUserProfile: async () => {
-    const response = await api.get('/user/profile');
-    return response.data;
-  },
-
-  // 스쿼트 기록 저장
-  saveSquatRecord: async (count: number) => {
-    const response = await api.post('/squat/record', { count });
-    return response.data;
-  },
-
-  // 스쿼트 기록 조회
-  getSquatHistory: async () => {
-    const response = await api.get('/squat/history');
-    return response.data;
-  },
-
-  // 리워드 청구
-  claimReward: async (amount: number) => {
-    const response = await api.post('/reward/claim', { amount });
-    return response.data;
-  },
-};
-
-export default api;
+export default solanaApi;

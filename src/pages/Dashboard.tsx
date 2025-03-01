@@ -1,5 +1,8 @@
 import React from 'react';
+import { useSelector } from 'react-redux';
+import { RootState } from '../store';
 import styled from 'styled-components';
+import { CONFIG } from '../config';
 
 const DashboardContainer = styled.div`
   padding: 20px;
@@ -8,7 +11,7 @@ const DashboardContainer = styled.div`
 `;
 
 const Title = styled.h1`
-  color: #333;
+  color: ${CONFIG.COLORS.TEXT};
   margin-bottom: 20px;
 `;
 
@@ -29,18 +32,31 @@ const StatTitle = styled.h2`
 const StatValue = styled.p`
   font-size: 24px;
   font-weight: bold;
-  color: #4CAF50;
+  color: ${CONFIG.COLORS.PRIMARY};
+`;
+
+const WalletInfo = styled.div`
+  background-color: #f0f0f0;
+  padding: 20px;
+  border-radius: 5px;
+  margin-bottom: 20px;
 `;
 
 const Dashboard: React.FC = () => {
-  // 이 데이터는 나중에 백엔드 API나 상태 관리 라이브러리에서 가져올 수 있습니다.
-  const totalSquats = 150;
-  const bestStreak = 7;
-  const lastSessionDate = new Date().toLocaleDateString();
+  const { walletAddress } = useSelector((state: RootState) => state.auth);
+  const { totalSquats, dailyGoal, bestStreak, lastSessionDate } = useSelector((state: RootState) => state.squats);
 
   return (
     <DashboardContainer>
       <Title>Your Squat Challenge Dashboard</Title>
+      <WalletInfo>
+        <StatTitle>Connected Wallet</StatTitle>
+        <StatValue>{walletAddress || 'Not connected'}</StatValue>
+      </WalletInfo>
+      <StatCard>
+        <StatTitle>Daily Goal</StatTitle>
+        <StatValue>{dailyGoal} squats</StatValue>
+      </StatCard>
       <StatCard>
         <StatTitle>Total Squats</StatTitle>
         <StatValue>{totalSquats}</StatValue>
@@ -51,7 +67,7 @@ const Dashboard: React.FC = () => {
       </StatCard>
       <StatCard>
         <StatTitle>Last Session</StatTitle>
-        <StatValue>{lastSessionDate}</StatValue>
+        <StatValue>{lastSessionDate || 'No sessions yet'}</StatValue>
       </StatCard>
     </DashboardContainer>
   );

@@ -1,65 +1,48 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import styled from 'styled-components';
+import { theme } from '../styles/theme';
+import { Link } from 'react-router-dom';
 
 const HomeContainer = styled.div`
-  text-align: center;
-  padding: 40px 20px;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  background-image: url('/background-image.jpg'); // 배경 이미지 추가 (public 폴더에 이미지를 넣어주세요)
-  background-size: cover;
-  background-position: center;
-`;
-
-const ContentWrapper = styled.div`
-  background-color: rgba(255, 255, 255, 0.8);
-  padding: 30px;
-  border-radius: 10px;
-  max-width: 600px;
+  max-width: 800px;
   margin: 0 auto;
+  padding: ${props => props.theme.spacing.large};
+  text-align: center;
 `;
 
 const Title = styled.h1`
-  color: #333;
   font-size: 2.5em;
-  margin-bottom: 20px;
+  color: ${props => props.theme.colors.primary};
+  margin-bottom: ${props => props.theme.spacing.medium};
 `;
 
 const Description = styled.p`
-  color: #666;
-  margin-bottom: 30px;
   font-size: 1.2em;
-  line-height: 1.5;
+  color: ${props => props.theme.colors.text};
+  margin-bottom: ${props => props.theme.spacing.large};
 `;
 
 const StartButton = styled(Link)`
-  background-color: #4CAF50;
+  background-color: ${props => props.theme.colors.accent};
   color: white;
-  padding: 15px 30px;
+  padding: ${props => props.theme.spacing.medium} ${props => props.theme.spacing.large};
+  border-radius: ${props => props.theme.borderRadius};
   text-decoration: none;
-  border-radius: 5px;
-  font-weight: bold;
-  font-size: 1.2em;
   transition: background-color 0.3s;
+  font-weight: bold;
 
   &:hover {
-    background-color: #45a049;
+    background-color: ${props => props.theme.colors.secondary};
   }
 `;
+
 
 const Home: React.FC = () => {
   return (
     <HomeContainer>
-      <ContentWrapper>
-        <Title>Welcome to Squat Challenge</Title>
-        <Description>
-          Get fit and have fun with our AI-powered squat counter! Challenge yourself and track your progress with cutting-edge technology.
-        </Description>
-        <StartButton to="/squat-challenge">Start Challenge</StartButton>
-      </ContentWrapper>
+      <Title>Welcome to Squat Challenge</Title>
+      <Description>Start your fitness journey with our squat challenge!</Description>
+      <StartButton to="/squat-challenge">Start Challenge</StartButton>
     </HomeContainer>
   );
 };

@@ -1,13 +1,18 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { RootState } from '../store';
 import styled from 'styled-components';
+import { theme } from '../styles/theme';
+import WalletConnection from './WalletConnection';
 
 const Nav = styled.nav`
-  background-color: #333;
-  padding: 10px 20px;
+  background-color: ${props => props.theme.colors.primary};
+  padding: ${props => props.theme.spacing.medium};
   display: flex;
   justify-content: space-between;
   align-items: center;
+  box-shadow: ${props => props.theme.boxShadow};
 `;
 
 const Logo = styled(Link)`
@@ -30,46 +35,68 @@ const NavList = styled.ul`
 `;
 
 const NavItem = styled.li`
-  margin: 0 10px;
+  margin: 0 ${theme.spacing.medium};
 
   @media (max-width: 768px) {
-    margin: 10px 0;
+    margin: ${theme.spacing.large} 0;
   }
 `;
 
 const NavLink = styled(Link)<{ $isActive: boolean }>`
   color: white;
   text-decoration: none;
-  padding: 5px 10px;
-  border-radius: 5px;
+  padding: ${props => props.theme.spacing.small} ${props => props.theme.spacing.medium};
+  border-radius: ${props => props.theme.borderRadius};
   transition: background-color 0.3s;
 
   &:hover {
-    background-color: #555;
+    background-color: ${props => props.theme.colors.primaryHover};
   }
 
   ${props => props.$isActive && `
-    background-color: #4CAF50;
-    &:hover {
-      background-color: #45a049;
-    }
+    background-color: ${props.theme.colors.primaryHover};
   `}
 `;
 
+const WalletButton = styled.div`
+  display: flex;
+  align-items: center;
+  color: white;
+  padding: ${props => props.theme.spacing.small} ${props => props.theme.spacing.medium};
+  border-radius: ${props => props.theme.borderRadius};
+  background-color: ${props => props.theme.colors.secondary};
+  cursor: pointer;
+
+  &:hover {
+    background-color: ${props => props.theme.colors.secondaryHover};
+  }
+`;
 const Navigation: React.FC = () => {
-    const location = useLocation();
-  
-    return (
-      <Nav>
-        <Logo to="/">Squat Challenge</Logo>
-        <NavList>
-          <NavItem><NavLink to="/" $isActive={location.pathname === "/"}>Home</NavLink></NavItem>
-          <NavItem><NavLink to="/squat-challenge" $isActive={location.pathname === "/squat-challenge"}>Squat Challenge</NavLink></NavItem>
-          <NavItem><NavLink to="/dashboard" $isActive={location.pathname === "/dashboard"}>Dashboard</NavLink></NavItem>
-          <NavItem><NavLink to="/register" $isActive={location.pathname === "/register"}>Register</NavLink></NavItem>
-        </NavList>
-      </Nav>
-    );
-  };
+  const { isConnected, walletAddress } = useSelector((state: RootState) => state.auth);
+  const location = useLocation();
+
+  return (
+    <Nav>
+      <Logo to="/">Squat Challenge</Logo>
+      <NavList>
+        <NavItem><NavLink to="/" $isActive={location.pathname === "/"}>Home</NavLink></NavItem>
+        {isConnected ? (
+          <>
+            <NavItem><NavLink to="/squat-challenge" $isActive={location.pathname === "/squat-challenge"}>Squat Challenge</NavLink></NavItem>
+            <NavItem><NavLink to="/dashboard" $isActive={location.pathname === "/dashboard"}>Dashboard</NavLink></NavItem>
+            <NavItem>
+              <WalletButton>
+                <span style={{ marginRight: theme.spacing.small }}>
+                  {walletAddress?.slice(0, 4)}...{walletAddress?.slice(-4)}
+                </span>
+              </WalletButton>
+            </NavItem>
+          </>
+        ) : null}
+        <NavItem><WalletConnection /></NavItem>
+      </NavList>
+    </Nav>
+  );
+};
 
 export default Navigation;
