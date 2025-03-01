@@ -1,33 +1,49 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
-import { useDispatch } from 'react-redux';
-import { setWalletConnection } from '../store/authSlice';
 import styled from 'styled-components';
+import { useDispatch } from 'react-redux';
+import { setWalletConnection, disconnectWallet } from '../store/authSlice';
+
+
 
 const StyledWalletMultiButton = styled(WalletMultiButton)`
-  // 여기에 필요한 스타일을 추가할 수 있습니다.
+  background-color: ${(props) => props.theme.colors.secondary};
+  color: white;
+  &:hover {
+    background-color: ${(props) => props.theme.colors.secondaryHover};
+  }
 `;
 
 const WalletConnection: React.FC = () => {
-  const { publicKey, connected } = useWallet();
+  const { wallet, publicKey, disconnect } = useWallet();
   const dispatch = useDispatch();
 
-  useEffect(() => {
-    if (connected && publicKey) {
-      dispatch(setWalletConnection({
-        isConnected: true,
-        address: publicKey.toBase58()
-      }));
+  React.useEffect(() => {
+    if (publicKey) {
+      dispatch(setWalletConnection({ isConnected: true, address: publicKey.toString() }));
     } else {
-      dispatch(setWalletConnection({
-        isConnected: false,
-        address: null
-      }));
+      dispatch(setWalletConnection({ isConnected: false, address: null }));
     }
-  }, [connected, publicKey, dispatch]);
+  }, [publicKey, dispatch]);
+  
 
-  return <StyledWalletMultiButton />;
+  const handleDisconnect = async () => {
+    if (wallet) {
+      await disconnect();
+      dispatch(disconnectWallet());
+    }
+  };  
+  
+
+  return (
+    <>
+      <StyledWalletMultiButton />
+      {publicKey && (
+        <button onClick={handleDisconnect}>Disconnect</button>
+      )}
+    </>
+  );
 };
 
 export default WalletConnection;

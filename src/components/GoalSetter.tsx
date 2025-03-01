@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { setDailyGoal } from '../store/squatsSlice';
+import { setDailyGoal } from '../store/squatSlice';
 import { RootState } from '../store';
 import styled from 'styled-components';
 

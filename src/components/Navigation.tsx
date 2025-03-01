@@ -80,19 +80,17 @@ const Navigation: React.FC = () => {
       <Logo to="/">Squat Challenge</Logo>
       <NavList>
         <NavItem><NavLink to="/" $isActive={location.pathname === "/"}>Home</NavLink></NavItem>
-        {isConnected ? (
+        {isConnected && (
           <>
             <NavItem><NavLink to="/squat-challenge" $isActive={location.pathname === "/squat-challenge"}>Squat Challenge</NavLink></NavItem>
             <NavItem><NavLink to="/dashboard" $isActive={location.pathname === "/dashboard"}>Dashboard</NavLink></NavItem>
             <NavItem>
-              <WalletButton>
-                <span style={{ marginRight: theme.spacing.small }}>
-                  {walletAddress?.slice(0, 4)}...{walletAddress?.slice(-4)}
-                </span>
-              </WalletButton>
+              <span style={{ color: 'white', marginRight: '10px' }}>
+                {walletAddress?.slice(0, 4)}...{walletAddress?.slice(-4)}
+              </span>
             </NavItem>
           </>
-        ) : null}
+        )}
         <NavItem><WalletConnection /></NavItem>
       </NavList>
     </Nav>

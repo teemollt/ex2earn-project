@@ -9,14 +9,17 @@ module.exports = function override(config) {
     "https": require.resolve("https-browserify"),
     "zlib": require.resolve("browserify-zlib"),
     "process": require.resolve("process/browser"),
-    "buffer": require.resolve("buffer")
+    "buffer": require.resolve("buffer"),
   });
   config.resolve.fallback = fallback;
   config.plugins = (config.plugins || []).concat([
     new webpack.ProvidePlugin({
-      process: 'process/browser',
-      Buffer: ['buffer', 'Buffer'],
+      process: 'process/browser.js',
     }),
   ]);
+  config.resolve.alias = {
+    ...config.resolve.alias,
+    "process": "process/browser.js"
+  };
   return config;
 };
