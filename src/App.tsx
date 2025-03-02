@@ -9,6 +9,8 @@ import Navigation from './components/Navigation';
 import Home from './pages/Home';
 import Dashboard from './pages/Dashboard';
 import SquatChallenge from './pages/SquatChallenge';
+import ConnectWallet from './pages/ConnectWallet'; // 지갑 연결 페이지 추가
+import ProtectedRoute from './components/ProtectedRoute'; // 보호된 경로 컴포넌트 추가
 
 // Solana wallet adapter imports
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
@@ -46,9 +48,30 @@ function App() {
               <Router>
                 <Navigation />
                 <Routes>
+                  {/* 공개 경로 */}
                   <Route path="/" element={<Home />} />
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/squat-challenge" element={<SquatChallenge />} />
+                  <Route path="/connect-wallet" element={<ConnectWallet />} />
+
+                  {/* 보호된 경로 */}
+                  <Route
+                    path="/dashboard"
+                    element={
+                      <ProtectedRoute>
+                        <Dashboard />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/squat-challenge"
+                    element={
+                      <ProtectedRoute>
+                        <SquatChallenge />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  {/* 404 페이지 */}
+                  <Route path="*" element={<div>404: 페이지를 찾을 수 없습니다.</div>} />
                 </Routes>
               </Router>
             </ThemeProvider>

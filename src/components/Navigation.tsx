@@ -71,19 +71,34 @@ const WalletButton = styled.div`
     background-color: ${props => props.theme.colors.secondaryHover};
   }
 `;
+
 const Navigation: React.FC = () => {
-  const { isConnected, walletAddress } = useSelector((state: RootState) => state.auth);
+  // Redux 상태에서 walletConnected와 walletAddress 가져오기
+  const { walletConnected, walletAddress } = useSelector((state: RootState) => state.auth);
+  
   const location = useLocation();
 
   return (
     <Nav>
       <Logo to="/">Squat Challenge</Logo>
       <NavList>
-        <NavItem><NavLink to="/" $isActive={location.pathname === "/"}>Home</NavLink></NavItem>
-        {isConnected && (
+        <NavItem>
+          <NavLink to="/" $isActive={location.pathname === "/"}>
+            Home
+          </NavLink>
+        </NavItem>
+        {walletConnected && (
           <>
-            <NavItem><NavLink to="/squat-challenge" $isActive={location.pathname === "/squat-challenge"}>Squat Challenge</NavLink></NavItem>
-            <NavItem><NavLink to="/dashboard" $isActive={location.pathname === "/dashboard"}>Dashboard</NavLink></NavItem>
+            <NavItem>
+              <NavLink to="/squat-challenge" $isActive={location.pathname === "/squat-challenge"}>
+                Squat Challenge
+              </NavLink>
+            </NavItem>
+            <NavItem>
+              <NavLink to="/dashboard" $isActive={location.pathname === "/dashboard"}>
+                Dashboard
+              </NavLink>
+            </NavItem>
             <NavItem>
               <span style={{ color: 'white', marginRight: '10px' }}>
                 {walletAddress?.slice(0, 4)}...{walletAddress?.slice(-4)}
@@ -91,7 +106,9 @@ const Navigation: React.FC = () => {
             </NavItem>
           </>
         )}
-        <NavItem><WalletConnection /></NavItem>
+        <NavItem>
+          <WalletConnection />
+        </NavItem>
       </NavList>
     </Nav>
   );

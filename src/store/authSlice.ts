@@ -1,33 +1,41 @@
-// src/store/authSlice.ts
-
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 interface AuthState {
-  isConnected: boolean;
+  walletConnected: boolean;
   walletAddress: string | null;
+  jwtToken: string | null;
   isAuthenticated: boolean;
 }
 
 const initialState: AuthState = {
-  isConnected: false,
+  walletConnected: false,
   walletAddress: null,
-  isAuthenticated: false
+  jwtToken: localStorage.getItem('token'),
+  isAuthenticated: !!localStorage.getItem('token')
 };
 
 const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    setWalletConnection: (state, action: PayloadAction<{ isConnected: boolean; address: string | null }>) => {
-      state.isConnected = action.payload.isConnected;
+    setWalletConnection: (state, action: PayloadAction<{ connected: boolean; address: string | null }>) => {
+      state.walletConnected = action.payload.connected;
       state.walletAddress = action.payload.address;
     },
     disconnectWallet: (state) => {
-      state.isConnected = false;
+      state.walletConnected = false;
       state.walletAddress = null;
+      state.jwtToken = null;
+      state.isAuthenticated = false;
+      localStorage.removeItem('token');
     },
+    setAuthToken: (state, action: PayloadAction<string>) => {
+      state.jwtToken = action.payload;
+      state.isAuthenticated = true;
+      localStorage.setItem('token', action.payload);
+    }
   },
 });
 
-export const { setWalletConnection, disconnectWallet } = authSlice.actions;
+export const { setWalletConnection, disconnectWallet, setAuthToken } = authSlice.actions;
 export default authSlice.reducer;
