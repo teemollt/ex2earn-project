@@ -1,16 +1,16 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common'; 
 import { ConfigModule } from '@nestjs/config';
-import { AuthModule } from './auth/auth.module';
 import { CoreModule } from './core/core.module';
 import { UserModule } from './user/user.module';
-import { PrismaService } from './common/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { SolanaService } from './common/solana.service';
+import helmet from 'helmet';
+import cors from 'cors';
 
 
 @Module({
   imports: [
     ConfigModule.forRoot(),
-    AuthModule, 
     UserModule, 
     CoreModule,
 
@@ -18,9 +18,15 @@ import { SolanaService } from './common/solana.service';
   providers: [PrismaService, SolanaService],
 })
 export class AppModule implements NestModule {
-  private readonly isDev: string = process.env.MODE === 'dev' ? true : false
+  private readonly isDev: boolean = process.env.MODE === 'dev' ? true : false
 
   configure(consumer: MiddlewareConsumer) {
-    throw new Error('Method not implemented.');
+      consumer
+        .apply(
+          helmet(), 
+          // morgan('dev'), 
+          // cors({ origin: ['http://localhost:3000'], credentials: true })
+        )
+        .forRoutes('*'); // 모든 엔드포인트에 적용
   }
 }

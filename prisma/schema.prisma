@@ -12,3 +12,11 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model User {
+  id        String  @id @default(cuid()) // 고유 ID
+  publicKey String  @unique // Solana 지갑 주소 (PK)
+  nickName  String?
+  createdAt DateTime @default(now()) // 생성 날짜
+}
+
