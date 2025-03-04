@@ -1,48 +1,47 @@
-import axios from 'axios';
-import { Connection, PublicKey } from '@solana/web3.js';
-import { WalletContextState } from '@solana/wallet-adapter-react';
+import axios, { AxiosRequestConfig } from 'axios';
+import { store } from '../store';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
-// 서명 메시지 생성 (백엔드와 동일한 형식이어야 함)
-export const generateSignMessage = (walletAddress: string): string => {
-  const timestamp = new Date().getTime();
-  return `Sign this message to authenticate with Ex2Earn: ${walletAddress} at ${timestamp}`;
-};
+export const apiCall = async <T>(
+  endpoint: string,
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE' = 'GET',
+  data?: any
+): Promise<T> => {
+  const state = store.getState();
+  const token = state.auth.jwtToken;
 
-// 지갑으로 메시지 서명 및 백엔드 인증
-export const authenticateWithWallet = async (wallet: WalletContextState): Promise<string> => {
+  const config: AxiosRequestConfig = {
+    method,
+    url: `${API_URL}${endpoint}`,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    data,
+  };
+
   try {
-    if (!wallet.publicKey || !wallet.signMessage) {
-      throw new Error('Wallet not connected or does not support message signing');
-    }
-
-    // 서명할 메시지 생성
-    const message = generateSignMessage(wallet.publicKey.toString());
-    const messageBytes = new TextEncoder().encode(message);
-
-    // 메시지 서명
-    const signature = await wallet.signMessage(messageBytes);
-    
-    // 백엔드로 서명 전송하여 JWT 토큰 받기
-    const response = await axios.post(`${API_URL}/auth/wallet-login`, {
-      publicKey: wallet.publicKey.toString(),
-      message,
-      signature: Buffer.from(signature).toString('base64')
-    });
-
-    return response.data.token;
+    const response = await axios(config);
+    return response.data;
   } catch (error) {
-    console.error('Authentication error:', error);
+    console.error(`Error in API call (${endpoint}):`, error);
     throw error;
   }
 };
 
-// JWT 토큰으로 인증된 API 요청 헤더 생성
-export const getAuthHeader = (token: string | null) => {
-  return {
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
-  };
+export const saveProgress = async (progressData: any) => {
+  return await apiCall('/progress/save', 'POST', progressData);
+};
+
+export const getDashboardData = async () => {
+  return await apiCall('/dashboard', 'GET');
+};
+
+export const saveGoal = async (goal: number) => {
+  return await apiCall('/goal/save', 'POST', { goal });
+};
+
+export const authenticateWithWallet = async (walletAddress: string) => {
+  return await apiCall('/auth/wallet', "POST", { walletAddress });
 };

@@ -58,7 +58,7 @@ const NavLink = styled(Link)<{ $isActive: boolean }>`
   `}
 `;
 
-const WalletButton = styled.div`
+const WalletInfo = styled.div`
   display: flex;
   align-items: center;
   color: white;
@@ -73,42 +73,32 @@ const WalletButton = styled.div`
 `;
 
 const Navigation: React.FC = () => {
-  // Redux 상태에서 walletConnected와 walletAddress 가져오기
-  const { walletConnected, walletAddress } = useSelector((state: RootState) => state.auth);
-  
+  const { walletConnected, walletAddress, isAuthenticated } = useSelector((state: RootState) => state.auth);
   const location = useLocation();
 
   return (
     <Nav>
       <Logo to="/">Squat Challenge</Logo>
       <NavList>
-        <NavItem>
-          <NavLink to="/" $isActive={location.pathname === "/"}>
-            Home
-          </NavLink>
-        </NavItem>
+        <NavItem><NavLink to="/" $isActive={location.pathname === "/"}>Home</NavLink></NavItem>
         {walletConnected && (
           <>
+            <NavItem><NavLink to="/squat-challenge" $isActive={location.pathname === "/squat-challenge"}>Squat Challenge</NavLink></NavItem>
+            <NavItem><NavLink to="/dashboard" $isActive={location.pathname === "/dashboard"}>Dashboard</NavLink></NavItem>
             <NavItem>
-              <NavLink to="/squat-challenge" $isActive={location.pathname === "/squat-challenge"}>
-                Squat Challenge
-              </NavLink>
-            </NavItem>
-            <NavItem>
-              <NavLink to="/dashboard" $isActive={location.pathname === "/dashboard"}>
-                Dashboard
-              </NavLink>
-            </NavItem>
-            <NavItem>
-              <span style={{ color: 'white', marginRight: '10px' }}>
-                {walletAddress?.slice(0, 4)}...{walletAddress?.slice(-4)}
-              </span>
+              {isAuthenticated ? (
+                <span style={{ color: 'white', marginRight: '10px' }}>
+                  {walletAddress?.slice(0, 4)}...{walletAddress?.slice(-4)}
+                </span>
+              ) : (
+                <Link to="/connect-wallet" style={{ color: 'white', textDecoration: 'none' }}>
+                  인증하기
+                </Link>
+              )}
             </NavItem>
           </>
         )}
-        <NavItem>
-          <WalletConnection />
-        </NavItem>
+        <NavItem><WalletConnection /></NavItem>
       </NavList>
     </Nav>
   );

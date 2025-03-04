@@ -1,8 +1,12 @@
-import React from 'react';
-import { useSelector } from 'react-redux';
+import React, { useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../store';
 import styled from 'styled-components';
 import { theme } from '../styles/theme';
+import { setDashboardData, SquatState } from '../store/squatSlice';
+import { useApiCall } from '../hooks/useApiCall';
+import { getDashboardData } from '../services/apiserver';
+
 
 const DashboardContainer = styled.div`
   padding: ${theme.spacing.large};
@@ -36,8 +40,26 @@ const StatValue = styled.p`
 `;
 
 const Dashboard: React.FC = () => {
+  const dispatch = useDispatch();
   const { walletAddress } = useSelector((state: RootState) => state.auth);
   const { totalSquats, dailyGoal, bestStreak, lastSessionDate } = useSelector((state: RootState) => state.squats);
+  const { callApi, loading, error } = useApiCall(getDashboardData);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const data = await callApi();
+        dispatch(setDashboardData(data as Partial<SquatState>));
+      } catch (err) {
+        console.error('Failed to fetch dashboard data:', err);
+      }
+    };
+
+    fetchDashboardData();
+  }, [callApi, dispatch]);
+
+  if (loading) return <div>Loading dashboard data...</div>;
+  if (error) return <div>Error: {error}</div>;
 
   return (
     <DashboardContainer>

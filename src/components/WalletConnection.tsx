@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
+import { WalletName } from '@solana/wallet-adapter-base';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store';
 import { setWalletConnection, disconnectWallet, setAuthToken } from '../store/authSlice';
@@ -48,7 +49,7 @@ const WalletConnection: React.FC = () => {
     if (wallet.wallet) {
       wallet.connect();
     } else {
-      wallet.select('phantom');
+      wallet.select('phantom' as WalletName<string>);
     }    
   };
 
@@ -66,8 +67,12 @@ const WalletConnection: React.FC = () => {
         return;
       }
 
-      const token = await authenticateWithWallet(wallet);
-      dispatch(setAuthToken(token));
+      const token = await authenticateWithWallet(wallet.publicKey?.toString() || '');
+      if (typeof token === 'string') {
+        dispatch(setAuthToken(token));
+      } else {
+        console.error('Invalid token type');
+      }
       alert('인증 성공! 이제 Ex2Earn 서비스를 이용할 수 있습니다.');
     } catch (error) {
       console.error('Authentication failed:', error);

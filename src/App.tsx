@@ -9,8 +9,7 @@ import Navigation from './components/Navigation';
 import Home from './pages/Home';
 import Dashboard from './pages/Dashboard';
 import SquatChallenge from './pages/SquatChallenge';
-import ConnectWallet from './pages/ConnectWallet'; // 지갑 연결 페이지 추가
-import ProtectedRoute from './components/ProtectedRoute'; // 보호된 경로 컴포넌트 추가
+import ConnectWallet from './pages/ConnectWallet';
 
 // Solana wallet adapter imports
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
@@ -19,6 +18,9 @@ import { PhantomWalletAdapter } from '@solana/wallet-adapter-wallets';
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
 import { clusterApiUrl } from '@solana/web3.js';
 
+// AppContext imports
+import { AppProvider } from './context/AppContext';
+
 // Default styles that can be overridden by your app
 require('@solana/wallet-adapter-react-ui/styles.css');
 
@@ -26,7 +28,6 @@ function App() {
   // The network can be set to 'devnet', 'testnet', or 'mainnet-beta'
   const network = WalletAdapterNetwork.Devnet;
 
-  // You can also provide a custom RPC endpoint
   const endpoint = useMemo(() => clusterApiUrl(network), [network]);
 
   // @solana/wallet-adapter-wallets includes all the adapters but supports tree shaking --
@@ -35,7 +36,7 @@ function App() {
     () => [
       new PhantomWalletAdapter(),
     ],
-    [network]
+    []
   );
 
   return (
@@ -43,38 +44,20 @@ function App() {
       <WalletProvider wallets={wallets} autoConnect>
         <WalletModalProvider>
           <Provider store={store}>
-            <ThemeProvider theme={theme}>
-              <GlobalStyle />
-              <Router>
-                <Navigation />
-                <Routes>
-                  {/* 공개 경로 */}
-                  <Route path="/" element={<Home />} />
-                  <Route path="/connect-wallet" element={<ConnectWallet />} />
-
-                  {/* 보호된 경로 */}
-                  <Route
-                    path="/dashboard"
-                    element={
-                      <ProtectedRoute>
-                        <Dashboard />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/squat-challenge"
-                    element={
-                      <ProtectedRoute>
-                        <SquatChallenge />
-                      </ProtectedRoute>
-                    }
-                  />
-
-                  {/* 404 페이지 */}
-                  <Route path="*" element={<div>404: 페이지를 찾을 수 없습니다.</div>} />
-                </Routes>
-              </Router>
-            </ThemeProvider>
+            <AppProvider> {/* Context API 추가 */}
+              <ThemeProvider theme={theme}>
+                <GlobalStyle />
+                <Router>
+                  <Navigation />
+                  <Routes>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/squat-challenge" element={<SquatChallenge />} />
+                    <Route path="/connect-wallet" element={<ConnectWallet />} />
+                  </Routes>
+                </Router>
+              </ThemeProvider>
+            </AppProvider>
           </Provider>
         </WalletModalProvider>
       </WalletProvider>
