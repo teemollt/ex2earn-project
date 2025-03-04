@@ -28,6 +28,7 @@
     "@nestjs/platform-express": "^11.0.1",
     "@prisma/client": "^6.4.1",
     "@solana/web3.js": "^1.98.0",
+    "class-validator": "^0.14.1",
     "helmet": "^8.0.0",
     "morgan": "^1.10.0",
     "passport": "^0.7.0",
