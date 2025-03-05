@@ -8,14 +8,20 @@ import { JwtModule } from '@nestjs/jwt';
 import { WalletAuthController } from './wallet-auth/wallet-auth.controller';
 import { WalletAuthService } from './wallet-auth/wallet-auth.service';
 import { PrismaModule } from 'prisma/prisma.module';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
 @Module({
   imports: [
     PrismaModule,
-    JwtModule.register({
-      secret: process.env.JWT_SECRET,
-      signOptions: { expiresIn: '7d' }, // 토큰 유효기간 7일
-    })
+    ConfigModule.forRoot({ isGlobal: true }),
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        secret: configService.get<string>('JWT_SECRET'), 
+        signOptions: { expiresIn: '7d' },
+      }),
+    }),
   ],
   providers: [UserService, LeaderboardService, UserRepository, WalletAuthService],
   controllers: [UserController, LeaderboardController, WalletAuthController],

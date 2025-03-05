@@ -9,7 +9,7 @@ export class UserRepository {
     return this.prisma.user.findUnique({ where: { publicKey } });
   }
 
-  async createUser(publicKey: string) {
+  async createUser(publicKey: string, nickName: string | null) {
     return this.prisma.user.create({ data: { publicKey } });
   }
 

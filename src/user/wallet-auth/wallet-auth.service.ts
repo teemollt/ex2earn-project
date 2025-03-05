@@ -1,8 +1,10 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import nacl from 'tweetnacl';
+import * as nacl from 'tweetnacl';
 import { PublicKey } from '@solana/web3.js';
 import { JwtService } from '@nestjs/jwt';
 import { UserRepository } from '../user/user.repository';
+import { generateRandomNickname } from '../../utils/nickname-generator';
+import { VerifySignatureDto } from '../dtos/verify-signature.dto';
 
 @Injectable()
 export class WalletAuthService {
@@ -23,48 +25,41 @@ export class WalletAuthService {
   }
 
   // 서명 검증
-  async verifySignature(publicKey: string, signature: number[], nonce: string) {
+  async verifySignature(sigInfo: VerifySignatureDto): Promise<{ success: boolean, token?: string }> {
 
+    const { publicKey, nonce, signature } = sigInfo;
     const storedNonce = this.nonces.get(publicKey);
     // Nonce가 없거나 Nonce가 일치하지 않으면 에러
     if (!storedNonce || storedNonce !== nonce) {
       throw new UnauthorizedException('Invalid nonce');
     }
 
+    console.log('nonce : ' + nonce + ' / storedNonce : ' + storedNonce);
+
     const message: Uint8Array = new TextEncoder().encode(nonce);
     const publicKeyBytes: Uint8Array = new PublicKey(publicKey).toBytes();
-    
+
     if (!nacl.sign.detached.verify(message, Uint8Array.from(signature), publicKeyBytes)) {
       throw new UnauthorizedException('Invalid signature');
     }
 
-
     // DB에서 유저 조회 (없으면 신규 유저 생성)
     let user = await this.userRepository.findByPublicKey(publicKey);
     if (!user) {
-      user = await this.userRepository.createUser(publicKey);
+      let nickname: string = generateRandomNickname();
+      user = await this.userRepository.createUser(publicKey, nickname);
     }
 
     this.nonces.delete(publicKey); // Nonce 재사용 방지
 
     // JWT 토큰 발급 (NestJS Passport 사용)
     const token = this.generateJwtToken({ publicKey });
+    console.log('token : ' + token);
     return { success: true, token };
   }
-
-    // 로그인 처리 (서명 검증 후 JWT 발급)
-    login(publicKey: string, signature: number[]): string {
-        const message = `Login with Solana: ${publicKey}`; // 고정 메시지
     
-        if (!this.verifySignature(publicKey, signature, message)) {
-          throw new UnauthorizedException('Invalid Signature');
-        }
-    
-        return this.generateJwtToken({ publicKey });
-      }
-    
-      generateJwtToken(user: { publicKey: string }) {
-        const payload = { publicKey: user.publicKey };
-        return this.jwtService.sign(payload);
-      }
+  generateJwtToken(user: { publicKey: string }) {
+    const payload = { publicKey: user.publicKey };
+    return this.jwtService.sign(payload);
+  }
 }

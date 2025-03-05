@@ -10,10 +10,10 @@ import cors from 'cors';
 
 @Module({
   imports: [
-    ConfigModule.forRoot(),
+    ConfigModule.forRoot({ isGlobal: true,
+      envFilePath: ['.env'] }),
     UserModule, 
     CoreModule,
-
   ],
   providers: [PrismaService, SolanaService],
 })
