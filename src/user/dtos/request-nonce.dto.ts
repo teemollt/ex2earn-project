@@ -1,7 +1,12 @@
-import { IsString, Length } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsString, IsNotEmpty } from 'class-validator';
 
 export class RequestNonceDto {
+  @ApiProperty({
+    example: 'AaBbCc...',
+    description: 'Solana wallet public key'
+  })
   @IsString()
-  @Length(32, 44) // Solana PublicKey 
+  @IsNotEmpty()
   publicKey: string;
 }

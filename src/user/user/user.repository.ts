@@ -16,7 +16,7 @@ export class UserRepository {
   async updateNickName(publicKey: string, nickName: string) {
     return this.prisma.user.update({
       where: { publicKey },
-      data: { nickName },
+      data: { nickName }
     });
   }
 }

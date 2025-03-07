@@ -9,10 +9,13 @@ import { WalletAuthController } from './wallet-auth/wallet-auth.controller';
 import { WalletAuthService } from './wallet-auth/wallet-auth.service';
 import { PrismaModule } from 'prisma/prisma.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { PassportModule } from '@nestjs/passport';
+import { JwtStrategy } from './guards/jwt.strategy';
 
 @Module({
   imports: [
     PrismaModule,
+    PassportModule.register({ defaultStrategy: 'jwt' }),
     ConfigModule.forRoot({ isGlobal: true }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -23,7 +26,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       }),
     }),
   ],
-  providers: [UserService, LeaderboardService, UserRepository, WalletAuthService],
+  providers: [UserService, LeaderboardService, UserRepository, WalletAuthService,JwtStrategy],
   controllers: [UserController, LeaderboardController, WalletAuthController],
   exports: [WalletAuthService, JwtModule]
 })

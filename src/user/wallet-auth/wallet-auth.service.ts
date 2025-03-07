@@ -5,6 +5,7 @@ import { JwtService } from '@nestjs/jwt';
 import { UserRepository } from '../user/user.repository';
 import { generateRandomNickname } from '../../utils/nickname-generator';
 import { VerifySignatureDto } from '../dtos/verify-signature.dto';
+import { RequestNonceDto } from '../dtos/request-nonce.dto';
 
 @Injectable()
 export class WalletAuthService {
@@ -16,11 +17,11 @@ export class WalletAuthService {
   private nonces = new Map<string, string>();
 
   // 서명 검증을 위한 Nonce 생성
-  generateNonce(publicKey: string): { nonce: string } {
+  generateNonce(body: RequestNonceDto): { nonce: string } {
     // 랜덤 문자열 생성
     const nonce = Math.random().toString(36).substring(2);
     // Nonce 저장
-    this.nonces.set(publicKey, nonce);
+    this.nonces.set(body.publicKey, nonce);
     return { nonce };
   }
 

@@ -50,7 +50,7 @@ describe('WalletAuthService', () => {
 
   it('should verify signature correctly', async () => {
     // Nonce 생성
-    const { nonce } = service.generateNonce(keypair.publicKey.toBase58());
+    const { nonce } = service.generateNonce({ publicKey: keypair.publicKey.toBase58() });
 
     // Nonce에 서명 (Signature 생성)
     const message = new TextEncoder().encode(nonce);
@@ -75,7 +75,7 @@ describe('WalletAuthService', () => {
   });
 
   it('should fail with invalid signature', async () => {
-    const { nonce } = service.generateNonce(keypair.publicKey.toBase58());
+    const { nonce } = service.generateNonce({ publicKey: keypair.publicKey.toBase58() });
 
     // 잘못된 서명 생성 (임의의 데이터 서명)
     const wrongMessage = new TextEncoder().encode('wrong nonce');
@@ -92,7 +92,7 @@ describe('WalletAuthService', () => {
   });
 
   it('should fail with invalid nonce', async () => {
-    const { nonce } = service.generateNonce(keypair.publicKey.toBase58());
+    const { nonce } = service.generateNonce({ publicKey: keypair.publicKey.toBase58() });
 
     // Nonce에 서명 (정상 서명)
     const message = new TextEncoder().encode(nonce);

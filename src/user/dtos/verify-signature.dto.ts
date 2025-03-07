@@ -1,13 +1,27 @@
-import { IsString, IsArray, Length } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsString, IsNotEmpty } from 'class-validator';
 
 export class VerifySignatureDto {
+  @ApiProperty({
+    example: 'AaBbCc...',
+    description: 'Solana wallet public key'
+  })
   @IsString()
-  @Length(32, 44) // Solana PublicKey 길이
+  @IsNotEmpty()
   publicKey: string;
 
+  @ApiProperty({
+    example: 'xyz123...',
+    description: 'Nonce received from /nonce endpoint'
+  })
   @IsString()
+  @IsNotEmpty()
   nonce: string;
 
-  @IsArray()
-  signature: number[]; // Uint8Array 형태의 서명
+  @ApiProperty({
+    example: '[1,2,3...]',
+    description: 'Signature bytes array'
+  })
+  @IsNotEmpty()
+  signature: number[];
 }
