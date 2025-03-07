@@ -35,7 +35,6 @@ export class WalletAuthService {
       throw new UnauthorizedException('Invalid nonce');
     }
 
-    console.log('nonce : ' + nonce + ' / storedNonce : ' + storedNonce);
 
     const message: Uint8Array = new TextEncoder().encode(nonce);
     const publicKeyBytes: Uint8Array = new PublicKey(publicKey).toBytes();
@@ -55,7 +54,6 @@ export class WalletAuthService {
 
     // JWT 토큰 발급 (NestJS Passport 사용)
     const token = this.generateJwtToken({ publicKey });
-    console.log('token : ' + token);
     return { success: true, token };
   }
     
