@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import styled from 'styled-components';
 import * as poseDetection from '@tensorflow-models/pose-detection';
 
@@ -23,13 +23,33 @@ const Canvas = styled.canvas`
   left: 0;
 `;
 
+const SquatCounter = styled.div`
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 5px;
+  font-size: 18px;
+  font-weight: bold;
+`;
+
+const SQUAT_DOWN_ANGLE = 110; // ✅ 스쿼트 감지 기준 (앉은 자세)
+const SQUAT_UP_ANGLE = 160; // ✅ 스쿼트 감지 기준 (서 있는 자세)
+const SQUAT_DELAY = 800; // ✅ 최소 스쿼트 간격 (ms) - 너무 빠른 반복 감지 방지
+
 interface VideoComponentProps {
-  onPoseDetected: (pose: any) => void;
+  onPoseDetected: (pose: { isSquatting: boolean }) => void;
 }
 
 const VideoComponent: React.FC<VideoComponentProps> = ({ onPoseDetected }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [isSquatting, setIsSquatting] = useState(false);
+  const [squatCount, setSquatCount] = useState(0);
+  const [lastSquatTime, setLastSquatTime] = useState<number>(0);
 
   useEffect(() => {
     let detector: poseDetection.PoseDetector;
@@ -48,16 +68,15 @@ const VideoComponent: React.FC<VideoComponentProps> = ({ onPoseDetected }) => {
     };
 
     const detectPose = async () => {
-      if (videoRef.current && canvasRef.current && detector) {
-        const poses = await detector.estimatePoses(videoRef.current);
-        if (poses.length > 0) {
-          const pose = poses[0];
-          // Implement squat detection logic here
-          const isSquatting = checkSquatPosition(pose);
-          onPoseDetected({ isSquatting });
-        }
-        requestAnimationFrame(detectPose);
+      if (!videoRef.current || !detector) return;
+
+      const poses = await detector.estimatePoses(videoRef.current);
+      if (poses.length > 0) {
+        const keypoints = poses[0].keypoints;
+        const kneeAngle = calculateKneeAngle(keypoints);
+        handleSquatDetection(kneeAngle);
       }
+      requestAnimationFrame(detectPose);
     };
 
     setupCamera();
@@ -69,35 +88,45 @@ const VideoComponent: React.FC<VideoComponentProps> = ({ onPoseDetected }) => {
         tracks.forEach(track => track.stop());
       }
     };
-  }, [onPoseDetected]);
+  }, []);
 
-  const checkSquatPosition = (pose: poseDetection.Pose): boolean => {
-    // Implement squat detection logic based on knee angle
-    // This is a simplified example and may need adjustment
-    const leftHip = pose.keypoints.find(kp => kp.name === 'left_hip');
-    const leftKnee = pose.keypoints.find(kp => kp.name === 'left_knee');
-    const leftAnkle = pose.keypoints.find(kp => kp.name === 'left_ankle');
+  const calculateKneeAngle = (keypoints: poseDetection.Keypoint[]) => {
+    const hip = keypoints.find((kp: poseDetection.Keypoint) => kp.name === 'left_hip');
+    const knee = keypoints.find((kp: poseDetection.Keypoint) => kp.name === 'left_knee');
+    const ankle = keypoints.find((kp: poseDetection.Keypoint) => kp.name === 'left_ankle');
+  
+    if (!hip || !knee || !ankle) return 180;
+  
+    return calculateAngle(hip, knee, ankle);
+  };
+  
 
-    if (leftHip && leftKnee && leftAnkle) {
-      const angle = calculateAngle(leftHip, leftKnee, leftAnkle);
-      return angle < 100; // Squat detected if knee angle is less than 100 degrees
-    }
-    return false;
+  const calculateAngle = (p1: any, p2: any, p3: any) => {
+    const radian = Math.atan2(p3.y - p2.y, p3.x - p2.x) - Math.atan2(p1.y - p2.y, p1.x - p2.x);
+    let angle = Math.abs((radian * 180) / Math.PI);
+    if (angle > 180) angle = 360 - angle;
+    return angle;
   };
 
-  const calculateAngle = (a: poseDetection.Keypoint, b: poseDetection.Keypoint, c: poseDetection.Keypoint) => {
-    const radians = Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);
-    let angle = Math.abs(radians * 180.0 / Math.PI);
-    if (angle > 180.0) {
-      angle = 360 - angle;
+  const handleSquatDetection = (kneeAngle: number) => {
+    const now = Date.now();
+    if (kneeAngle <= SQUAT_DOWN_ANGLE && !isSquatting) {
+      setIsSquatting(true);
+    } else if (kneeAngle >= SQUAT_UP_ANGLE && isSquatting) {
+      if (now - lastSquatTime >= SQUAT_DELAY) {
+        setSquatCount(prev => prev + 1);
+        setLastSquatTime(now);
+        onPoseDetected({ isSquatting: false });
+      }
+      setIsSquatting(false);
     }
-    return angle;
   };
 
   return (
     <VideoContainer>
       <Video ref={videoRef} autoPlay playsInline />
       <Canvas ref={canvasRef} width={640} height={480} />
+      <SquatCounter>스쿼트 횟수: {squatCount}</SquatCounter>
     </VideoContainer>
   );
 };

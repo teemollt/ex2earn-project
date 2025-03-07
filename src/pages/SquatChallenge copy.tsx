@@ -465,3 +465,5 @@ const SquatChallenge: React.FC = () => {
     
     //export default SquatChallenge;
     */
+
+    export {}; // ✅ 빈 export 추가하여 모듈로 인식되도록 함.

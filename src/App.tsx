@@ -1,43 +1,55 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, Suspense } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { ThemeProvider } from 'styled-components';
-import { Provider } from 'react-redux';
-import { store } from './store';
-import { GlobalStyle } from './styles/globalStyles';
+import { Provider, useSelector } from 'react-redux';
+import { store, RootState } from './store';
+import GlobalStyle from './styles/GlobalStyle'; // ✅ 글로벌 스타일 불러오기
 import { theme } from './styles/theme';
 import Navigation from './components/Navigation';
-import Home from './pages/Home';
-import Dashboard from './pages/Dashboard';
-import SquatChallenge from './pages/SquatChallenge';
-import ConnectWallet from './pages/ConnectWallet';
-
-// Solana wallet adapter imports
+import ProgressBar from './components/ProgressBar'; // ✅ 운동 진행률 추가
+// Solana Wallet Adapter imports
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
-import { PhantomWalletAdapter } from '@solana/wallet-adapter-wallets';
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
 import { clusterApiUrl } from '@solana/web3.js';
+import { PhantomWalletAdapter, SolflareWalletAdapter } from '@solana/wallet-adapter-wallets';
 
 // AppContext imports
 import { AppProvider } from './context/AppContext';
 
+// ErrorBoundary 추가
+import ErrorBoundary from './components/ErrorBoundary';
+
+
+
+// Lazy 로딩 적용 (코드 스플리팅)
+const Home = React.lazy(() => import('./pages/Home'));
+const Dashboard = React.lazy(() => import('./pages/Dashboard'));
+const SquatChallenge = React.lazy(() => import('./pages/SquatChallenge'));
+const ConnectWallet = React.lazy(() => import('./pages/ConnectWallet'));
+
+
+
 // Default styles that can be overridden by your app
 require('@solana/wallet-adapter-react-ui/styles.css');
 
-function App() {
-  // The network can be set to 'devnet', 'testnet', or 'mainnet-beta'
-  const network = WalletAdapterNetwork.Devnet;
+// ✅ 운동 진행률을 Redux에서 가져와 ProgressBar에 적용하는 컴포넌트
+const ProgressBarWrapper = () => {
+  const { todayCount, dailyGoal } = useSelector((state: RootState) => state.squats);
+  const progress = Math.min((todayCount / dailyGoal) * 100, 100); // ✅ 0 ~ 100% 값으로 변환
+  return <ProgressBar progress={progress} />;
+};
 
+function App() {
+  // ✅ .env 파일에서 Solana 네트워크 가져오기 (Devnet, Testnet, Mainnet 설정 가능)
+  const network = process.env.REACT_APP_SOLANA_NETWORK as WalletAdapterNetwork || WalletAdapterNetwork.Devnet;
   const endpoint = useMemo(() => clusterApiUrl(network), [network]);
 
-  // @solana/wallet-adapter-wallets includes all the adapters but supports tree shaking --
-  // Only the wallets you configure here will be compiled into your application
-  const wallets = useMemo(
-    () => [
-      new PhantomWalletAdapter(),
-    ],
-    []
-  );
+  // ✅ 여러 개의 지갑 지원 (Phantom, Solflare)
+  const wallets = useMemo(() => [
+    new PhantomWalletAdapter(),
+    new SolflareWalletAdapter(),
+  ], []);
 
   return (
     <ConnectionProvider endpoint={endpoint}>
@@ -49,12 +61,20 @@ function App() {
                 <GlobalStyle />
                 <Router>
                   <Navigation />
-                  <Routes>
-                    <Route path="/" element={<Home />} />
-                    <Route path="/dashboard" element={<Dashboard />} />
-                    <Route path="/squat-challenge" element={<SquatChallenge />} />
-                    <Route path="/connect-wallet" element={<ConnectWallet />} />
-                  </Routes>
+                  <ErrorBoundary>
+                    <div style={{ textAlign: 'center', padding: '20px' }}>
+                      <h1>🏋️‍♂️ Ex2Earn 피트니스</h1>
+                      <ProgressBarWrapper /> {/* ✅ 운동 진행률 UI 추가 */}
+                    </div>
+                    <Suspense fallback={<div>⏳ 로딩 중...</div>}>
+                      <Routes>
+                        <Route path="/" element={<Home />} />
+                        <Route path="/dashboard" element={<Dashboard />} />
+                        <Route path="/squat-challenge" element={<SquatChallenge />} />
+                        <Route path="/connect-wallet" element={<ConnectWallet />} />
+                      </Routes>
+                    </Suspense>
+                  </ErrorBoundary>
                 </Router>
               </ThemeProvider>
             </AppProvider>

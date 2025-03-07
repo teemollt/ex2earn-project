@@ -1,74 +1,66 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import React, { useState } from 'react';
 import styled from 'styled-components';
+import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store';
-import { updateSquatCount, completeChallenge } from '../store/squatSlice';
+import { updateSquatCount } from '../store/squatSlice';
+import { saveSquatDataOnChain } from '../services/solanaService';
 import VideoComponent from '../components/VideoComponent';
-import SquatCounter from '../components/SquatCounter';
 import RewardModal from '../components/RewardModal';
 import { useWallet } from '@solana/wallet-adapter-react';
 
 const Container = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  max-width: 600px;
+  margin: 20px auto;
   padding: 20px;
-  background-color: #f0f0f0;
-  min-height: 100vh;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  text-align: center;
 `;
 
 const Title = styled.h1`
-  color: #333;
+  color: ${props => props.theme.colors.primary};
   margin-bottom: 20px;
 `;
 
-
-
-
 const SquatChallenge: React.FC = () => {
   const dispatch = useDispatch();
-  const { publicKey } = useWallet();
+  const wallet = useWallet(); // ✅ useWallet()을 컴포넌트 내부에서 호출 (오류 해결)
+  const { todayCount, dailyGoal } = useSelector((state: RootState) => state.squats);
+  const [showReward, setShowReward] = useState(false);
 
-  const [count, setCount] = useState(0);
-  const [showCelebration, setShowCelebration] = useState(false);
+  const handlePoseDetected = async ({ isSquatting }: { isSquatting: boolean }) => {
+    if (!isSquatting) {
+      const newCount = todayCount + 1;
+      dispatch(updateSquatCount(1)); // ✅ Redux 상태 업데이트
 
-  const todayCount = useSelector((state: RootState) => state.squats.todayCount);
-  const dailyGoal = useSelector((state: RootState) => state.squats.dailyGoal);
+      // ✅ 10회마다 Solana 블록체인에 저장
+      if (newCount % 10 === 0) {
+        try {
+          if (!wallet || !wallet.publicKey) {
+            alert('❌ 지갑이 연결되지 않았습니다. 블록체인 저장이 불가능합니다.');
+            return;
+          }
 
-  const handlePoseDetected = useCallback((pose: any) => {
-    if (pose.isSquatting) {
-      setCount(prevCount => prevCount + 1);
-      dispatch(updateSquatCount(1));
-    }
-  }, [dispatch]);
+          const txSignature = await saveSquatDataOnChain(wallet.publicKey.toString(), newCount);
+          console.log(`✅ 블록체인 저장 완료: ${txSignature}`);
+        } catch (error) {
+          console.error('❌ 블록체인 저장 실패:', error);
+        }
+      }
 
-  useEffect(() => {
-    if (todayCount >= dailyGoal) {
-      setShowCelebration(true);
-      dispatch(completeChallenge(new Date().toISOString().split('T')[0]));
-    }
-  }, [todayCount, dailyGoal, dispatch]);
-
-  const saveSquatDataOnChain = async () => {
-    if (!publicKey) {
-      console.error('Wallet not connected');
-      return;
-    }
-
-    try {
-      // Save data to blockchain logic
-      console.log('Data saved to blockchain');
-    } catch (error) {
-      console.error('Failed to save data:', error);
+      // ✅ 목표 달성 시 보상 화면 표시
+      if (newCount >= dailyGoal) {
+        setShowReward(true);
+      }
     }
   };
 
   return (
     <Container>
-      <Title>Squat Challenge</Title>
+      <Title>🏋️‍♂️ 스쿼트 챌린지</Title>
       <VideoComponent onPoseDetected={handlePoseDetected} />
-      <SquatCounter count={count} todayCount={todayCount} dailyGoal={dailyGoal} />
-      {showCelebration && <RewardModal onClose={() => setShowCelebration(false)} onSave={saveSquatDataOnChain} />}
+      {showReward && <RewardModal onClose={() => setShowReward(false)} onSave={async () => console.log('보상 저장!')} />}
     </Container>
   );
 };

@@ -23,10 +23,9 @@ const Description = styled.p`
 `;
 
 const ConnectWallet: React.FC = () => {
-  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const { isAuthenticated, isSigned } = useSelector((state: RootState) => state.auth);
 
-  // 이미 인증된 사용자는 대시보드로 리다이렉트
-  if (isAuthenticated) {
+  if (isAuthenticated && isSigned) {
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -38,6 +37,7 @@ const ConnectWallet: React.FC = () => {
         시작하려면 솔라나 지갑을 연결하고 인증해주세요.
       </Description>
       <WalletConnection />
+      {!isSigned && <p>⚠️ 메시지를 서명해야 인증이 완료됩니다.</p>}
     </Container>
   );
 };
