@@ -20,3 +20,11 @@ model User {
   createdAt DateTime @default(now()) // 생성 날짜
 }
 
+model Exercise {
+  id            String   @id @default(uuid())
+  walletAddress String   @unique
+  count         Int
+  createdAt     DateTime @default(now())
+}
+
+
