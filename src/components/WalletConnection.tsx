@@ -1,13 +1,21 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { WalletName } from '@solana/wallet-adapter-base';
+import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { RootState } from '../store';
 import { setWalletConnection, disconnectWallet, setAuthToken, setWalletSigned } from '../store/authSlice';
 import { authenticateWithWallet } from '../services/authService';
+import { getUserProfile } from '../services/apiService';
 import styled from 'styled-components';
 
-const WalletButton = styled.button`
+const WalletContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+`;
+
+const ConnectButton = styled.button`
   background-color: ${props => props.theme.colors.primary};
   color: white;
   padding: 10px 15px;
@@ -22,17 +30,6 @@ const WalletButton = styled.button`
   }
 `;
 
-const WalletInfo = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-`;
-
-const WalletAddress = styled.span`
-  font-size: 14px;
-  color: ${props => props.theme.colors.text};
-`;
-
 const ErrorMessage = styled.p`
   color: ${props => props.theme.colors.error};
   font-size: 14px;
@@ -41,8 +38,9 @@ const ErrorMessage = styled.p`
 const WalletConnection: React.FC = () => {
   const wallet = useWallet();
   const dispatch = useDispatch();
-  const { walletConnected, isAuthenticated, isSigned } = useSelector((state: RootState) => state.auth);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const { walletConnected, isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
 
   useEffect(() => {
     if (wallet.connected && wallet.publicKey) {
@@ -51,51 +49,39 @@ const WalletConnection: React.FC = () => {
         address: wallet.publicKey.toBase58()
       }));
     } else {
-      dispatch(disconnectWallet()); // ✅ 지갑이 연결되지 않으면 상태 초기화
+      dispatch(disconnectWallet());
     }
   }, [wallet.connected, wallet.publicKey, dispatch]);
 
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/profile');
+    }
+  }, [isAuthenticated, navigate]);
+
   const handleConnect = async () => {
     try {
-      if (wallet.wallet) {
-        await wallet.connect();
-      } else {
-        wallet.select('phantom' as WalletName<string>);
-      }
-      setErrorMessage(null);
-    } catch (error) {
-      console.error('❌ 지갑 연결 실패:', error);
-      setErrorMessage('지갑 연결에 실패했습니다. 다시 시도해주세요.');
-    }
-  };
-
-  const handleDisconnect = async () => {
-    try {
-      await wallet.disconnect();
-      dispatch(disconnectWallet());
-      setErrorMessage(null);
-    } catch (error) {
-      console.error('❌ 지갑 연결 해제 실패:', error);
-      setErrorMessage('지갑 연결 해제 중 오류가 발생했습니다.');
-    }
-  };
-
-  const handleAuthenticate = async () => {
-    try {
       if (!wallet.connected || !wallet.publicKey) {
-        await handleConnect();
+        setErrorMessage('지갑을 먼저 연결해주세요.');
         return;
       }
 
+      console.log('인증 시작...');
       const token = await authenticateWithWallet(wallet);
-      if (typeof token === 'string') {
-        dispatch(setAuthToken(token));
-        dispatch(setWalletSigned(true)); // ✅ 서명 완료 상태 저장
-        setErrorMessage(null);
-        alert('✅ 인증 성공! 이제 Ex2Earn 서비스를 이용할 수 있습니다.');
-      } else {
-        throw new Error('서버에서 반환된 토큰 형식이 잘못되었습니다.');
+      console.log('인증 성공, 토큰:', token);
+      
+      dispatch(setAuthToken(token));
+      dispatch(setWalletSigned(true));
+      
+      try {
+        const profile = await getUserProfile();
+        console.log('프로필 조회 성공:', profile);
+      } catch (error) {
+        console.error('프로필 조회 실패:', error);
       }
+      
+      setErrorMessage(null);
+      alert('✅ 인증 성공! 프로필 페이지로 이동합니다.');
     } catch (error) {
       console.error('❌ 인증 실패:', error);
       setErrorMessage('인증에 실패했습니다. 다시 시도해주세요.');
@@ -103,30 +89,15 @@ const WalletConnection: React.FC = () => {
   };
 
   return (
-    <div>
-      {!walletConnected ? (
-        <WalletButton onClick={handleConnect}>
-          지갑 연결
-        </WalletButton>
-      ) : (
-        <WalletInfo>
-          <WalletAddress>
-            {wallet.publicKey?.toBase58().slice(0, 4)}...
-            {wallet.publicKey?.toBase58().slice(-4)}
-          </WalletAddress>
-          {!isSigned ? (
-            <WalletButton onClick={handleAuthenticate}>
-              메시지 서명 후 인증
-            </WalletButton>
-          ) : (
-            <WalletButton onClick={handleDisconnect}>
-              연결 해제
-            </WalletButton>
-          )}
-        </WalletInfo>
+    <WalletContainer>
+      <WalletMultiButton />
+      {wallet.connected && !isAuthenticated && (
+        <ConnectButton onClick={handleConnect}>
+          Connect
+        </ConnectButton>
       )}
       {errorMessage && <ErrorMessage>{errorMessage}</ErrorMessage>}
-    </div>
+    </WalletContainer>
   );
 };
 

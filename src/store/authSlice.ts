@@ -4,7 +4,7 @@ interface AuthState {
   walletConnected: boolean;
   walletAddress: string | null;
   isAuthenticated: boolean;
-  isSigned: boolean;  
+  isSigned: boolean;
   jwtToken: string | null;
 }
 
@@ -12,7 +12,7 @@ const initialState: AuthState = {
   walletConnected: false,
   walletAddress: null,
   isAuthenticated: false,
-  isSigned: false,  
+  isSigned: false,
   jwtToken: null,
 };
 
@@ -24,22 +24,24 @@ const authSlice = createSlice({
       state.walletConnected = action.payload.connected;
       state.walletAddress = action.payload.address;
     },
+    setAuthToken: (state, action: PayloadAction<string>) => {
+      state.jwtToken = action.payload;
+      state.isAuthenticated = true;
+    },
+    setWalletSigned: (state, action: PayloadAction<boolean>) => {
+      state.isSigned = action.payload;
+    },
     disconnectWallet: (state) => {
       state.walletConnected = false;
       state.walletAddress = null;
       state.isAuthenticated = false;
       state.isSigned = false;
       state.jwtToken = null;
+      localStorage.removeItem('jwtToken');
     },
-    setAuthToken: (state, action: PayloadAction<string>) => {
-      state.jwtToken = action.payload;
-      state.isAuthenticated = true;
-    },
-    setWalletSigned: (state, action: PayloadAction<boolean>) => { 
-      state.isSigned = action.payload;
-    }
   },
 });
 
-export const { setWalletConnection, disconnectWallet, setAuthToken, setWalletSigned } = authSlice.actions;
+export const { setWalletConnection, setAuthToken, setWalletSigned, disconnectWallet } = authSlice.actions;
+
 export default authSlice.reducer;

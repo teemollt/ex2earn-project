@@ -1,8 +1,16 @@
-import axios, { AxiosRequestConfig } from 'axios';
-import { store } from '../store';
+import { AxiosRequestConfig } from 'axios';
+import { authenticatedAxios } from './authService';
 
 // ✅ 환경 변수에서 API 기본 URL 가져오기
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+
+interface UserProfile {
+  publicKey: string;
+  totalSquats: number;
+  level: number;
+  rewards: number;
+  // 필요한 다른 프로필 정보들 추가
+}
 
 // ✅ 공통 API 호출 함수
 export const apiCall = async <T>(
@@ -11,29 +19,24 @@ export const apiCall = async <T>(
   data?: any
 ): Promise<T> => {
   try {
-    // ✅ Redux에서 최신 JWT 토큰 가져오기
-    const state = store.getState();
-    const token = state.auth.jwtToken;
-
-    // ✅ 요청 설정
     const config: AxiosRequestConfig = {
       method,
-      url: `${API_URL}${endpoint}`,
-      headers: {
-        Authorization: token ? `Bearer ${token}` : '', // ✅ 토큰이 있으면 추가
-        'Content-Type': 'application/json',
-      },
-      ...(method !== 'GET' ? { data } : {}), // ✅ GET 요청 시에는 data 제거
+      url: endpoint,
+      ...(method !== 'GET' ? { data } : {}),
     };
 
-    // ✅ API 요청 실행
-    const response = await axios(config);
+    const response = await authenticatedAxios(config);
     return response.data;
   } catch (error: any) {
     // ✅ 상세 오류 메시지 로깅
     console.error(`❌ API 요청 오류 (${endpoint}):`, error?.response?.data || error.message);
     throw new Error(error?.response?.data?.message || 'API 요청 중 오류 발생');
   }
+};
+
+// ✅ 사용자 프로필 조회
+export const getUserProfile = async (): Promise<UserProfile> => {
+  return await apiCall('/user/profile', 'GET');
 };
 
 // ✅ 운동 기록 저장 (서버 API)

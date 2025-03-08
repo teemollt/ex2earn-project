@@ -10,9 +10,8 @@ import ProgressBar from './components/ProgressBar'; // ✅ 운동 진행률 추�
 // Solana Wallet Adapter imports
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
-import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
+import { WalletModalProvider, WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { clusterApiUrl } from '@solana/web3.js';
-import { PhantomWalletAdapter, SolflareWalletAdapter } from '@solana/wallet-adapter-wallets';
 
 // AppContext imports
 import { AppProvider } from './context/AppContext';
@@ -27,6 +26,7 @@ const Home = React.lazy(() => import('./pages/Home'));
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 const SquatChallenge = React.lazy(() => import('./pages/SquatChallenge'));
 const ConnectWallet = React.lazy(() => import('./pages/ConnectWallet'));
+const Profile = React.lazy(() => import('./pages/Profile'));
 
 
 
@@ -45,15 +45,12 @@ function App() {
   const network = process.env.REACT_APP_SOLANA_NETWORK as WalletAdapterNetwork || WalletAdapterNetwork.Devnet;
   const endpoint = useMemo(() => clusterApiUrl(network), [network]);
 
-  // ✅ 여러 개의 지갑 지원 (Phantom, Solflare)
-  const wallets = useMemo(() => [
-    new PhantomWalletAdapter(),
-    new SolflareWalletAdapter(),
-  ], []);
+  // 빈 배열로 설정하여 기본 어댑터만 사용
+  const wallets = useMemo(() => [], []);
 
   return (
     <ConnectionProvider endpoint={endpoint}>
-      <WalletProvider wallets={wallets} autoConnect>
+      <WalletProvider wallets={wallets} autoConnect={true}>
         <WalletModalProvider>
           <Provider store={store}>
             <AppProvider> {/* Context API 추가 */}
@@ -72,6 +69,7 @@ function App() {
                         <Route path="/dashboard" element={<Dashboard />} />
                         <Route path="/squat-challenge" element={<SquatChallenge />} />
                         <Route path="/connect-wallet" element={<ConnectWallet />} />
+                        <Route path="/profile" element={<Profile />} />
                       </Routes>
                     </Suspense>
                   </ErrorBoundary>
